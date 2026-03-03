@@ -1,0 +1,30 @@
+import geopandas as gpd
+from shapely.geometry import box
+
+# Load faults
+fault_path = r".shp"
+faults = gpd.read_file(fault_path).to_crs("EPSG:4326")
+
+# ----------------------------------------
+# Create Two Bounding Boxes
+# ----------------------------------------
+
+box1 = box(73, 30, 85, 35.5)   # 
+box2 = box(85, 22, 97, 35.5)   # 
+
+bbox_gdf = gpd.GeoDataFrame(
+    geometry=[box1, box2],
+    crs="EPSG:4326"
+)
+
+# ----------------------------------------
+# Clip
+# ----------------------------------------
+
+himalayan_faults = gpd.clip(faults, bbox_gdf)
+
+# Save
+output_path = r".shp"
+himalayan_faults.to_file(output_path)
+
+print("Unwanted Tibet portion removed successfully!")
