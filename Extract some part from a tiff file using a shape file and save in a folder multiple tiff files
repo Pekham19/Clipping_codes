@@ -1,0 +1,68 @@
+import os
+import rasterio
+from rasterio.mask import mask
+import geopandas as gpd
+
+# -------------------------------
+# 1. Input paths
+# -------------------------------
+input_folder = r"_"
+shapefile_path = r".shp"
+output_folder = r"_"
+
+# Create output folder if not exists
+os.makedirs(output_folder, exist_ok=True)
+
+# -------------------------------
+# 2. Read shapefile
+# -------------------------------
+gdf = gpd.read_file(shapefile_path)
+
+# Get geometry shapes
+shapes = [feature["geometry"] for feature in gdf.__geo_interface__["features"]]
+
+# -------------------------------
+# 3. Loop through all TIFF files
+# -------------------------------
+for file in os.listdir(input_folder):
+    if file.endswith(".tif"):
+
+        raster_path = os.path.join(input_folder, file)
+        output_path = os.path.join(output_folder, file)
+
+        print(f"Processing: {file}")
+
+        with rasterio.open(raster_path) as src:
+
+            # Reproject shapefile if CRS mismatch
+            if gdf.crs != src.crs:
+                gdf_proj = gdf.to_crs(src.crs)
+                shapes = [feature["geometry"] for feature in gdf_proj.__geo_interface__["features"]]
+
+            # Clip raster
+            out_image, out_transform = mask(
+                src,
+                shapes,
+                crop=True,
+                nodata=src.nodata if src.nodata is not None else 0,
+                filled=True
+            )
+
+            out_meta = src.meta.copy()
+
+            # Update metadata
+            out_meta.update({
+                "driver": "GTiff",
+                "height": out_image.shape[1],
+                "width": out_image.shape[2],
+                "transform": out_transform,
+                "nodata": src.nodata if src.nodata is not None else 0
+            })
+
+        # Save clipped raster
+        with rasterio.open(output_path, "w", **out_meta) as dest:
+            dest.write(out_image)
+
+        print(f"Saved: {output_path}")
+
+print("✅ All TIFF files clipped successfully!")
