@@ -1,0 +1,33 @@
+import geopandas as gpd
+
+# ----------------------------------------
+# Load Faults Shapefile
+# ----------------------------------------
+fault_path = r".shp"
+faults = gpd.read_file(fault_path)
+
+# ----------------------------------------
+# Load Your  Shapefile
+# (Replace this path with your shapefile path)
+# ----------------------------------------
+boundary_path = r".shp"
+boundary = gpd.read_file(Name)
+
+# ----------------------------------------
+# Ensure Same CRS
+# ----------------------------------------
+faults = faults.to_crs("EPSG:4326")
+himalaya_boundary = himalaya_boundary.to_crs("EPSG:4326")
+
+# ----------------------------------------
+# Clip Faults Using Your Boundary
+# ----------------------------------------
+himalayan_faults = gpd.clip(faults, himalaya_boundary)
+
+# ----------------------------------------
+# Save Output
+# ----------------------------------------
+output_path = r".shp"
+himalayan_faults.to_file(output_path)
+
+print("Name")
