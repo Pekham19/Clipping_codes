@@ -1,0 +1,29 @@
+import geopandas as gpd
+import os
+
+# Input shapefile
+input_fc = r".shp"
+
+# Output folder
+output_folder = r"_"
+output_fc = os.path.join(output_folder, "Folder name")
+
+if not os.path.exists(output_folder):
+    os.makedirs(output_folder)
+
+# Read shapefile
+gdf = gpd.read_file(input_fc)
+
+# States to select
+distname = [
+    "which shape file you want to extract"
+]
+
+# Filter
+northern_gdf = gdf[gdf["Attribute table_column_name"].isin(Attribute table_column_name)]
+
+# Save
+northern_gdf.to_file(output_fc)
+
+print("✅ name_that_shape")
+print("Selected features:", len(northern_gdf))
