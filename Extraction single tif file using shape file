@@ -1,0 +1,56 @@
+import rasterio
+from rasterio.mask import mask
+import geopandas as gpd
+import numpy as np
+
+# -------------------------------
+# 1. Input paths
+# -------------------------------
+raster_path = r"_"
+shapefile_path = r".shp"
+output_path = r"_"
+
+# -------------------------------
+# 2. Read shapefile
+# -------------------------------
+gdf = gpd.read_file(shapefile_path)
+
+with rasterio.open(raster_path) as src:
+
+    # Reproject shapefile if CRS mismatch
+    if gdf.crs != src.crs:
+        gdf = gdf.to_crs(src.crs)
+
+    shapes = [feature["geometry"] for feature in gdf.__geo_interface__["features"]]
+
+    # -------------------------------
+    # 3. Clip raster properly
+    # -------------------------------
+    out_image, out_transform = mask(
+        src,
+        shapes,
+        crop=True,
+        nodata=src.nodata if src.nodata is not None else 0,
+        filled=True
+    )
+
+    out_meta = src.meta.copy()
+
+# -------------------------------
+# 4. Update metadata properly
+# -------------------------------
+out_meta.update({
+    "driver": "GTiff",
+    "height": out_image.shape[1],
+    "width": out_image.shape[2],
+    "transform": out_transform,
+    "nodata": src.nodata if src.nodata is not None else 0
+})
+
+# -------------------------------
+# 5. Save output
+# -------------------------------
+with rasterio.open(output_path, "w", **out_meta) as dest:
+    dest.write(out_image)
+
+print("Clipping completed successfully!")
